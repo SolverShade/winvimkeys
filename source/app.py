@@ -1,15 +1,10 @@
 import sys
 from PySide6.QtWidgets import QApplication
-from source.ui.main_window import MainWindow
-import keyboard
+from source.view.shortcut_window import ShortcutWindow
+from source.controller.shortcut_controller import ShortcutController
 
 def run():
     app = QApplication(sys.argv)
-    window = MainWindow()
-    
-    # window must be shown before being hidden
-    window.show()
-    window.hide()
-    
+    controller = ShortcutController()
+    controller.load_shortcut_window()
     sys.exit(app.exec())
-    

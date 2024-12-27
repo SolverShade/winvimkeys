@@ -1,0 +1,12 @@
+[
+    {
+        "shortcutKey": "s",
+        "appName": "Steam",
+        "path": "C:\\Program Files (x86)\\Steam\\steam.exe"
+    },
+    {
+        "shortcutKey": "o",
+        "appName": "Visual Studio Code",
+        "path": "C:\\Users\\Randy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
+    }
+]
