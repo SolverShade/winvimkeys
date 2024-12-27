@@ -4,7 +4,7 @@ import keyboard
 import psutil
 import os
 import time
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QMetaObject, Q_ARG
 from PySide6.QtWidgets import QMessageBox
 from source.model.shortcut_model import ShortcutModel
 from source.view.shortcut_window import ShortcutWindow
@@ -42,10 +42,13 @@ class ShortcutController:
                 self.view, "Error", f"Application path not found: {path}"
             )
 
+    # def toggle_window(self):
+        # if self.view.isHidden():
+            # self.view.show()
+            # self.view.activateWindow()
+            # self.view.raise_()
+        # else:
+            # self.view.hide()
+            
     def toggle_window(self):
-        if self.view.isHidden():
-            self.view.show()
-            self.view.activateWindow()
-            self.view.raise_()
-        else:
-            self.view.hide()
+        QMetaObject.invokeMethod(self.view, "setVisible", Qt.QueuedConnection, Q_ARG(bool, not self.view.isVisible()))           

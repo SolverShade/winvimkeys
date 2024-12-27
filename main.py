@@ -1,4 +1,3 @@
-import sys
 from source.app import run
 
 if __name__ == "__main__":
