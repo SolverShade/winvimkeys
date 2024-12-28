@@ -2,11 +2,13 @@
     {
         "shortcutKey": "s",
         "appName": "Steam",
-        "path": "C:\\Program Files (x86)\\Steam\\steam.exe"
+        "path": "C:\\Program Files (x86)\\Steam\\steam.exe",
+        "pid": 6984
     },
     {
         "shortcutKey": "o",
         "appName": "Visual Studio Code",
-        "path": "C:\\Users\\Randy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
+        "path": "C:\\Users\\Randy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+        "pid": 10228
     }
 ]

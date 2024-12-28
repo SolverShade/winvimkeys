@@ -7,7 +7,10 @@ from PySide6.QtGui import QKeySequence, QShortcut
 from source.model.shortcut_model import ShortcutModel
 from source.view.shortcut_window import ShortcutWindow
 from env import ROOT_DIR
-
+from pywinauto import Application
+import win32gui
+import win32con
+import win32process
 
 class ShortcutController:
     def __init__(self):
@@ -18,28 +21,32 @@ class ShortcutController:
         )
 
         self.view.set_items(shortcuts)
-        self.view.connect_item_clicked(self.on_item_clicked)
+        self.view.connect_item_clicked(self.onItemClick)
         
         for shortcut in shortcuts: 
             appShortcut = QShortcut(QKeySequence(shortcut.shortcutKey), self.view)
-            appShortcut.activated.connect(lambda path=shortcut.path: self.launch_application(path))
-            appShortcut.activated.connect(self.toggle_window)
+            appShortcut.activated.connect(lambda path=shortcut.path, pid = shortcut.pid: self.activateApp(path, pid))
+            appShortcut.activated.connect(self.ToggleWindow)
             
         exitShortcut = QShortcut(QKeySequence("ESC"), self.view)
-        exitShortcut.activated.connect(self.toggle_window)
+        exitShortcut.activated.connect(self.ToggleWindow)
 
-        keyboard.add_hotkey("ctrl+;", self.toggle_window)
+        keyboard.add_hotkey("ctrl+;", self.ToggleWindow)
 
-    def load_shortcut_window(self):
+    def loadShortcutWindow(self):
         self.view.show()
         self.view.hide()
 
-    def on_item_clicked(self, item):
+    def onItemClick(self, item):
         shortcut = item.data(Qt.UserRole)
         if shortcut:
-            self.launch_application(shortcut.path)
+            self.activateApp(shortcut.path, shortcut.pid)
 
-    def launch_application(self, path):
+    def activateApp(self, path, pid):
+        if self.isAppOpen(pid): 
+            self.focusApp(pid, path)
+            return
+        
         if os.path.exists(path):
             os.startfile(path)
         else:
@@ -47,15 +54,40 @@ class ShortcutController:
                 self.view, "Error", f"Application path not found: {path}"
             )
             
-    def is_application_open(self, executable_path):
-        executable_name = os.path.basename(executable_path)
-        for proc in psutil.process_iter(['pid', 'name']):
-            try:
-                if proc.info['name'] == executable_name:
-                    return True
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-        return False
-    
-    def toggle_window(self):
-        QMetaObject.invokeMethod(self.view, "setVisible", Qt.QueuedConnection, Q_ARG(bool, not self.view.isVisible()))           
+    def isAppOpen(self, pid):
+        try:
+            proc = psutil.Process(pid)
+            return proc.is_running()
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            return False
+        
+    def findWindow(self, pid, window_title):
+        def callback(hwnd, pid):
+            _, found_pid = win32process.GetWindowThreadProcessId(hwnd)
+            if found_pid == pid:
+                if window_title and window_title.lower() in win32gui.GetWindowText(hwnd).lower():
+                    hwnds.insert(0, hwnd)  
+                else:
+                    hwnds.append(hwnd)
+            return True
+        
+        hwnds = []
+        win32gui.EnumWindows(callback, pid)
+        return hwnds
+
+    def focusApp(self, pid, path):
+        appName =  os.path.splitext(os.path.basename(path))[0]
+        hwnds = self.findWindow(pid, appName)
+        if hwnds:
+            hwnd = hwnds[0]
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            win32gui.SetForegroundWindow(hwnd)
+            print(f"Window for PID {pid} found and focused.")
+        else:
+            print(f"No window found for PID {pid}.")
+            
+    def ToggleWindow(self):
+        QMetaObject.invokeMethod(self.view, "setVisible", Qt.QueuedConnection, Q_ARG(bool, not self.view.isVisible()))         
+        if self.view.isVisible():
+            self.view.activateWindow()
+            self.view.raise_()

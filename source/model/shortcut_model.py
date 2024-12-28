@@ -2,10 +2,11 @@ import json
 
 
 class ShortcutModel:
-    def __init__(self, shortcutKey, appName, path):
+    def __init__(self, shortcutKey, appName, path, pid):
         self.shortcutKey = shortcutKey
         self.appName = appName
         self.path = path
+        self.pid = pid
 
     @staticmethod
     def load_from_json(file_path):
@@ -13,7 +14,7 @@ class ShortcutModel:
             data = json.load(file)
             return [
                 ShortcutModel(item["shortcutKey"],
-                              item["appName"], item["path"])
+                              item["appName"], item["path"], item["pid"])
                 for item in data
             ]
 
