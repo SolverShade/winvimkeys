@@ -3,8 +3,8 @@ from PySide6.QtWidgets import (
     QListWidget,
     QVBoxLayout,
     QWidget,
-    QMessageBox,
     QListWidgetItem,
+    QLineEdit,
 )
 from PySide6.QtCore import Qt
 
@@ -15,11 +15,14 @@ class ShortcutWindow(QMainWindow):
         self.setWindowTitle("PySide6 Window")
         self.setGeometry(150, 50, 1200, 36)
         self.setWindowFlags(Qt.FramelessWindowHint)
-
+         
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout()
+        self.text_field = QLineEdit()
+        layout.addWidget(self.text_field)
+
         self.list_widget = QListWidget()
         layout.addWidget(self.list_widget)
         central_widget.setLayout(layout)
