@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QListWidgetItem,
-    QLineEdit,
+    QLineEdit
 )
 from PySide6.QtCore import Qt
 
@@ -20,8 +20,12 @@ class ShortcutWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout()
-        self.text_field = QLineEdit()
-        layout.addWidget(self.text_field)
+        
+        self.textbox = QLineEdit()
+        self.textbox.setReadOnly(True)
+        self.textbox.setAlignment(Qt.AlignCenter)
+        self.textbox.setText("-select a shortcut-")
+        layout.addWidget(self.textbox)
 
         self.list_widget = QListWidget()
         layout.addWidget(self.list_widget)
