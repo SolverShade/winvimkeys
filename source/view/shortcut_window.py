@@ -14,7 +14,7 @@ class ShortcutWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PySide6 Window")
-        self.setGeometry(150, 50, 1200, 36)
+        self.setGeometry(150, 50, 1200, 90)
         self.setWindowFlags(Qt.FramelessWindowHint)
 
         central_widget = QWidget()
@@ -50,7 +50,7 @@ class ShortcutWindow(QMainWindow):
 
     def set_items(self, items):
         for item in items:
-            list_item = QListWidgetItem(f"{item.shortcutKey:<8} {item.appName}")
+            list_item = QListWidgetItem(f"{item.shortcutKeys:<8} {item.appName}")
             list_item.setData(Qt.UserRole, item)
             self.list_widget.addItem(list_item)
 

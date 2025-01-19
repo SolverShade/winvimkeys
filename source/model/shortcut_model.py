@@ -2,8 +2,8 @@ import json
 
 
 class ShortcutModel:
-    def __init__(self, shortcutKey, appName, path, pid):
-        self.shortcutKey = shortcutKey
+    def __init__(self, shortcutKeys, appName, path, pid):
+        self.shortcutKeys = shortcutKeys
         self.appName = appName
         self.path = path
         self.pid = pid
@@ -13,10 +13,17 @@ class ShortcutModel:
         with open(file_path, "r") as file:
             data = json.load(file)
             return [
-                ShortcutModel(item["shortcutKey"],
-                              item["appName"], item["path"], item["pid"])
+                ShortcutModel(
+                    item["shortcutKey"], item["appName"], item["path"], item["pid"]
+                )
                 for item in data
             ]
 
+    def clear(self):
+        self.shortcutKeys = ""
+        self.appName = ""
+        self.path = ""
+        self.pid = ""
+
     def __repr__(self):
-        return f"ShortcutModel(shortcutKey={self.shortcutKey}, appName={self.appName}, path={self.path})"
+        return f"ShortcutModel(shortcutKey={self.shortcutKeys}, appName={self.appName}, path={self.path})"

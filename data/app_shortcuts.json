@@ -6,9 +6,15 @@
         "pid": 6984
     },
     {
-        "shortcutKey": "o",
-        "appName": "Visual Studio Code",
-        "path": "C:\\Users\\HarambeCrompten\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
-        "pid": 10228
+        "shortcutKey": "d",
+        "appName": "duck game",
+        "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Duck Game\\DuckGame.exe",
+        "pid": 11128
+    },
+    {
+        "shortcutKey": "s",
+        "appName": "steam",
+        "path": "C:\\Program Files (x86)\\Steam\\bin\\cef\\cef.win7x64\\steamwebhelper.exe",
+        "pid": 16160
     }
 ]

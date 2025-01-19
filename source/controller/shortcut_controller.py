@@ -1,3 +1,4 @@
+import json
 import keyboard
 import os
 from PySide6.QtCore import Qt, QObject, Slot, Signal
@@ -17,40 +18,38 @@ class ShortcutController(QObject):
         super().__init__()
 
         self.view = ShortcutWindow()
-        self.view.shortcutInput.keySequenceChanged.connect(self.onShortcutPress)
-        self.view.shortcutAdder.keySequenceChanged.connect(self.onNewShortcutSubmitted)
-        self.view.appNameTextbox.returnPressed.connect(self.onAppNameSubmit)
+        self.view.shortcutInput.keySequenceChanged.connect(self.runShortcut)
+        self.view.shortcutAdder.keySequenceChanged.connect(self.addShortcutKeys)
+        self.view.appNameTextbox.returnPressed.connect(self.submitAppName)
 
+        # listen to method that will emit signal to main thread
+        self.mouse_listener = mouse.Listener(on_click=self.addApp)
+        self.mouse_listener.start()
+        self.appWindowSelected.connect(self.handleAppAdded)
+
+        # the following is a global hotkey so the window can be toggled even when closed
+        keyboard.add_hotkey("ctrl+;", self.toggleWindow)
+
+        self.shortcutToAdd = ShortcutModel("", "", "", "")
+        self.loadShortcuts()
+
+    def loadShortcuts(self):
         self.shortcuts = ShortcutModel.load_from_json(
             PROJECT_DIR + "\\data\\app_shortcuts.json"
         )
-
         self.view.set_items(self.shortcuts)
 
-        self.nextShortcutName = ""
-        self.nextShortcutKeys = QKeySequence()
-
-        # the following is a global hotkey so the window can be toggled even when closed
-        keyboard.add_hotkey("ctrl+;", self.ToggleWindow)
-
-        # listen to method that will emit signal to main thread
-        self.mouse_listener = mouse.Listener(on_click=self.checkCtrlClick)
-        self.mouse_listener.start()
-
-        # Connect the signal to the slot
-        self.appWindowSelected.connect(self.handleAppWindowSelected)
-
-    def onShortcutPress(self):
+    def runShortcut(self):
         keySequence = self.view.shortcutInput.keySequence()
         print(keySequence.toString())
 
         for shortcut in self.shortcuts:
-            if keySequence == QKeySequence(shortcut.shortcutKey):
+            if keySequence == QKeySequence(shortcut.shortcutKeys):
                 self.activateApp(shortcut.path, shortcut.pid)
-                self.ToggleWindow()
+                self.toggleWindow()
 
         if keySequence == Qt.Key_Escape:
-            self.ToggleWindow()
+            self.toggleWindow()
 
         if keySequence == QKeySequence("Shift+A"):
             self.view.shortcutInput.hide()
@@ -62,11 +61,11 @@ class ShortcutController(QObject):
 
         self.view.shortcutInput.clear()
 
-    def onAppNameSubmit(self):
-        name = self.view.appNameTextbox
+    def submitAppName(self):
+        name = self.view.appNameTextbox.text()
 
         if name != "":
-            self.nextShortcutName = self.view.appNameTextbox.text()
+            self.shortcutToAdd.appName = name
             self.view.appNameTextbox.clear()
             self.view.appNameTextbox.hide()
 
@@ -76,15 +75,14 @@ class ShortcutController(QObject):
         else:
             self.view.messageBox.setText("Name cannot be empty. Try again")
 
-    def onNewShortcutSubmitted(self):
+    def addShortcutKeys(self):
         keySequence = self.view.shortcutAdder.keySequence()
-        print(keySequence.toString())
 
         if keySequence.isEmpty() == False:
             # ensures the event filter continues to run while user clicks outside window
             self.view.setWindowFlags(self.view.windowFlags() & ~Qt.WindowStaysOnTopHint)
 
-            self.nextShortcutKeys = keySequence
+            self.shortcutToAdd.shortcutKeys = keySequence
             self.view.shortcutAdder.clear()
             self.view.shortcutAdder.hide()
             self.view.setFocus()
@@ -94,7 +92,7 @@ class ShortcutController(QObject):
         else:
             self.view.messageBox.setText("Shortcut cannot be empty. Try again")
 
-    def checkCtrlClick(self, x, y, button, pressed):
+    def addApp(self, x, y, button, pressed):
         if pressed and button == mouse.Button.right and keyboard.is_pressed("ctrl"):
             windowInfo = WindowManager.getAppInfoUnderCursor()
 
@@ -105,15 +103,35 @@ class ShortcutController(QObject):
                 self.appWindowSelected.emit(windowTitle, appExe, appPid)
 
     @Slot(str, str, int)
-    def handleAppWindowSelected(self, windowTitle, appExe, appPid):
+    def handleAppAdded(self, windowTitle, appExe, appPid):
+        self.shortcutToAdd.pid = appPid
+        self.shortcutToAdd.path = appExe
+
+        shortcut_data = {
+            "shortcutKey": self.shortcutToAdd.shortcutKeys.toString().lower(),
+            "appName": self.shortcutToAdd.appName,
+            "path": self.shortcutToAdd.path,
+            "pid": self.shortcutToAdd.pid,
+        }
+
+        # add shortcut to app_shortcuts.json
+        file_path = os.path.join(PROJECT_DIR, "data", "app_shortcuts.json")
+        try:
+            with open(file_path, "r+") as file:
+                data = json.load(file)
+                data.append(shortcut_data)
+                file.seek(0)
+                json.dump(data, file, indent=4)
+        except FileNotFoundError:
+            with open(file_path, "w") as file:
+                json.dump([shortcut_data], file, indent=4)
+
+        self.shortcutToAdd.clear()
+
         self.view.messageBox.setText(f"shortcut for {windowTitle} added")
-        self.nextShortcutKeys = QKeySequence()
-        self.nextShortcutName = ""
         self.view.shortcutInput.show()
         self.view.shortcutInput.setFocus()
         self.view.list_widget.show()
-
-        print(f"Window Title: {windowTitle} appExe: {appExe} appPid: {appPid}")
 
     def activateApp(self, path, pid):
         if WindowManager.is_window_open(pid):
@@ -127,9 +145,10 @@ class ShortcutController(QObject):
                 self.view, "Error", f"Application path not found: {path}"
             )
 
-    def ToggleWindow(self):
+    def toggleWindow(self):
         WindowManager.toggle_qt_window(self.view)
 
     def loadShortcutWindow(self):
         self.view.show()
         self.view.hide()
+        self.view.setFocus()
