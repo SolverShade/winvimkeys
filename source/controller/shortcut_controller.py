@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QMessageBox
 from PySide6.QtGui import QKeySequence
 from source.model.shortcut_model import ShortcutModel
 from source.view.shortcut_window import ShortcutWindow
-from source.controller.window_manager import WindowManager
+from source.utility.window_manager import WindowManager
 from env import PROJECT_DIR
 from pynput import mouse
 from source.controller.app_adder import AppAdder

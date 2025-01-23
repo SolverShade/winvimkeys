@@ -1,6 +1,6 @@
 import json
 import os
-from source.controller.window_manager import WindowManager
+from source.utility.window_manager import WindowManager
 from source.model.shortcut_model import ShortcutModel
 from source.view.shortcut_window import ShortcutWindow
 from PySide6.QtCore import Qt, QObject, Signal, Slot
