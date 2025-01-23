@@ -16,5 +16,17 @@
         "appName": "steam",
         "path": "C:\\Program Files (x86)\\Steam\\bin\\cef\\cef.win7x64\\steamwebhelper.exe",
         "pid": 16160
+    },
+    {
+        "shortcutKey": "p",
+        "appName": "potato",
+        "path": "C:\\Program Files (x86)\\Steam\\bin\\cef\\cef.win7x64\\steamwebhelper.exe",
+        "pid": 25612
+    },
+    {
+        "shortcutKey": "a",
+        "appName": "aseprite",
+        "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\Aseprite.exe",
+        "pid": 32504
     }
 ]

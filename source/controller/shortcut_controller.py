@@ -9,6 +9,7 @@ from source.view.shortcut_window import ShortcutWindow
 from source.controller.window_manager import WindowManager
 from env import PROJECT_DIR
 from pynput import mouse
+from source.controller.app_adder import AppAdder
 
 
 class ShortcutController(QObject):
@@ -18,29 +19,23 @@ class ShortcutController(QObject):
         super().__init__()
 
         self.view = ShortcutWindow()
-        self.view.shortcutInput.keySequenceChanged.connect(self.runShortcut)
-        self.view.shortcutAdder.keySequenceChanged.connect(self.addShortcutKeys)
-        self.view.appNameTextbox.returnPressed.connect(self.submitAppName)
-
-        # listen to method that will emit signal to main thread
-        self.mouse_listener = mouse.Listener(on_click=self.addApp)
-        self.mouse_listener.start()
-        self.appWindowSelected.connect(self.handleAppAdded)
+        self.view.shortcut_input.keySequenceChanged.connect(self.runShortcut)
+        self.app_adder = AppAdder(self.view)
 
         # the following is a global hotkey so the window can be toggled even when closed
         keyboard.add_hotkey("ctrl+;", self.toggleWindow)
 
-        self.shortcutToAdd = ShortcutModel("", "", "", "")
         self.loadShortcuts()
 
     def loadShortcuts(self):
         self.shortcuts = ShortcutModel.load_from_json(
             PROJECT_DIR + "\\data\\app_shortcuts.json"
         )
-        self.view.set_items(self.shortcuts)
+        self.view.add_shortcuts_to_list(self.shortcuts)
+        self.view.add_item_to_list("A", "Add Shortcut", None)
 
     def runShortcut(self):
-        keySequence = self.view.shortcutInput.keySequence()
+        keySequence = self.view.shortcut_input.keySequence()
         print(keySequence.toString())
 
         for shortcut in self.shortcuts:
@@ -52,86 +47,9 @@ class ShortcutController(QObject):
             self.toggleWindow()
 
         if keySequence == QKeySequence("Shift+A"):
-            self.view.shortcutInput.hide()
-            self.view.list_widget.hide()
+            self.app_adder.start_adding_shortcut()
 
-            self.view.messageBox.setText("-enter the name of the application-")
-            self.view.appNameTextbox.show()
-            self.view.appNameTextbox.setFocus()
-
-        self.view.shortcutInput.clear()
-
-    def submitAppName(self):
-        name = self.view.appNameTextbox.text()
-
-        if name != "":
-            self.shortcutToAdd.appName = name
-            self.view.appNameTextbox.clear()
-            self.view.appNameTextbox.hide()
-
-            self.view.messageBox.setText("-enter the shortcut keys for application-")
-            self.view.shortcutAdder.show()
-            self.view.shortcutAdder.setFocus()
-        else:
-            self.view.messageBox.setText("Name cannot be empty. Try again")
-
-    def addShortcutKeys(self):
-        keySequence = self.view.shortcutAdder.keySequence()
-
-        if keySequence.isEmpty() == False:
-            # ensures the event filter continues to run while user clicks outside window
-            self.view.setWindowFlags(self.view.windowFlags() & ~Qt.WindowStaysOnTopHint)
-
-            self.shortcutToAdd.shortcutKeys = keySequence
-            self.view.shortcutAdder.clear()
-            self.view.shortcutAdder.hide()
-            self.view.setFocus()
-            self.view.messageBox.setText(
-                "-press control + right click on the application window"
-            )
-        else:
-            self.view.messageBox.setText("Shortcut cannot be empty. Try again")
-
-    def addApp(self, x, y, button, pressed):
-        if pressed and button == mouse.Button.right and keyboard.is_pressed("ctrl"):
-            windowInfo = WindowManager.getAppInfoUnderCursor()
-
-            if windowInfo is None:
-                self.view.messageBox.textChanged.emit("-no window found, try again-")
-            else:
-                windowTitle, appExe, appPid = windowInfo
-                self.appWindowSelected.emit(windowTitle, appExe, appPid)
-
-    @Slot(str, str, int)
-    def handleAppAdded(self, windowTitle, appExe, appPid):
-        self.shortcutToAdd.pid = appPid
-        self.shortcutToAdd.path = appExe
-
-        shortcut_data = {
-            "shortcutKey": self.shortcutToAdd.shortcutKeys.toString().lower(),
-            "appName": self.shortcutToAdd.appName,
-            "path": self.shortcutToAdd.path,
-            "pid": self.shortcutToAdd.pid,
-        }
-
-        # add shortcut to app_shortcuts.json
-        file_path = os.path.join(PROJECT_DIR, "data", "app_shortcuts.json")
-        try:
-            with open(file_path, "r+") as file:
-                data = json.load(file)
-                data.append(shortcut_data)
-                file.seek(0)
-                json.dump(data, file, indent=4)
-        except FileNotFoundError:
-            with open(file_path, "w") as file:
-                json.dump([shortcut_data], file, indent=4)
-
-        self.shortcutToAdd.clear()
-
-        self.view.messageBox.setText(f"shortcut for {windowTitle} added")
-        self.view.shortcutInput.show()
-        self.view.shortcutInput.setFocus()
-        self.view.list_widget.show()
+        self.view.shortcut_input.clear()
 
     def activateApp(self, path, pid):
         if WindowManager.is_window_open(pid):

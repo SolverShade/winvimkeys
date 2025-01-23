@@ -1,0 +1,5 @@
+
+
+[1969-12-31 19:00:00] Client version: no bootstrapper found
+[1969-12-31 19:00:00] Startup - webhelper launched pid: 3944 commandline: "C:\Program Files (x86)\Steam\bin\cef\cef.win7x64\steamwebhelper.exe"
+[1969-12-31 19:00:00] Browser - launching child process with: "C:\Program Files (x86)\Steam\bin\cef\cef.win7x64\steamwebhelper.exe" --type=gpu-process --user-agent-product="Valve Steam Client" --lang=en-US --user-data-dir="C:\Users\HarambeCrompten\AppData\Local\CEF\User Data" /prefetch:2
